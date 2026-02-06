@@ -1,8 +1,29 @@
 # Agent Crew for Claude Code
 
-> Smart coding router, dual plan review, and dual code review for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — powered by [Codex](https://github.com/openai/codex) and [Gemini](https://github.com/google/gemini-cli) CLIs.
+![Version](https://img.shields.io/github/v/release/rlraymondluo/agent-crew-for-claude-code?style=flat-square&label=version)
+![License](https://img.shields.io/github/license/rlraymondluo/agent-crew-for-claude-code?style=flat-square)
+![Platform](https://img.shields.io/badge/platform-Claude%20Code-7c3aed?style=flat-square)
 
-Install this plugin and you get four Claude Code agents and three slash commands. The "Crew" agents analyze your task and route to the best AI backend — Claude Code orchestrates everything.
+> Route coding tasks to the best AI. Review code and plans with two AI reviewers at once. One plugin, zero config.
+
+**Agent Crew** gives Claude Code access to Codex and Gemini as backends — it picks the right one for each task, runs structured plan-review loops, and returns unified reports. All from inside your terminal.
+
+```bash
+claude plugin install agent-crew
+```
+
+## Quick Start
+
+```bash
+# Route a coding task to the best AI
+/crew-code Add authentication middleware to the Express API
+
+# Review your code with two AI reviewers before a PR
+/crew-review
+
+# Get your implementation plan reviewed by Codex + Gemini
+/crew-plan
+```
 
 ## Install
 
@@ -28,8 +49,6 @@ git clone https://github.com/rlraymondluo/agent-crew-for-claude-code.git
 Claude Code has the best agentic scaffolding — subagents, agent teams, structured workflows, codebase-aware context building. Codex is great at raw code generation. Gemini brings a different perspective for reviews. But right now you have to pick one or the other.
 
 This plugin gives you all three. The Crew agents analyze your task, pick the best backend, gather project context, run structured plan-review loops, and return detailed reports. You get Claude's orchestration with the best tool for each job.
-
-**No extra API keys or subscriptions.** The plugin shells out to the Codex CLI and Gemini CLI directly. If you already have them installed and authenticated, this just works.
 
 ## What You Get
 
