@@ -1,28 +1,30 @@
 # codex-coder
 
-Use Claude Code's agent teams to orchestrate OpenAI Codex coding agents — with structured plan-review loops and dual AI code review.
+**Use Codex as a coding agent inside Claude Code.**
 
-## The Idea
+Claude Code is great at orchestration — subagents, agent teams, plan-review loops, codebase-aware context building. Codex is great at raw code generation. This plugin combines the two: Claude directs, Codex codes, and you get the best of both without leaving Claude Code.
 
-**Claude reasons. Codex generates. Gemini reviews.** (Gemini is optional.)
+## Why
 
-Claude Code acts as the team lead — it reads your codebase, understands your project guidelines, and delegates coding to Codex through structured plan-review loops. Before any PR is created, both Codex and Gemini (if available) review the changes in parallel, producing a unified report with severity-ranked findings.
+Claude Code has the best agentic scaffolding (agent teams, subagent delegation, structured workflows), but sometimes you want Codex writing the code. Codex has strong code generation, but no built-in orchestration layer, no subagents, no iterative plan-review loops.
 
-You get Claude's architectural judgment directing Codex's code generation, with optional Gemini as a second pair of eyes.
+This plugin bridges that gap. Claude reads your codebase, builds context from your CLAUDE.md and project conventions, crafts detailed prompts, reviews Codex's plans, sends feedback, and only lets Codex execute once the plan is solid. You get Claude's oversight with Codex's output.
+
+**No extra API keys or subscriptions.** The agents shell out to the Codex CLI and Gemini CLI directly — if you already have them installed and authenticated, this just works. You're using the same tools you already have.
 
 ## What's Included
 
-| File | Type | Description |
-|------|------|-------------|
-| `agents/codex-coder.md` | Agent | Orchestrates Codex for coding tasks with iterative plan-review loops |
-| `agents/ai-reviewer.md` | Agent | Runs dual code review (Codex required, Gemini optional) before PRs |
-| `commands/codex-review.md` | Command | `/codex-review` — quick trigger for pre-PR code review |
+| File | Type | What it does |
+|------|------|--------------|
+| `agents/codex-coder.md` | Agent | Delegates coding tasks to Codex with iterative plan-review loops |
+| `agents/ai-reviewer.md` | Agent | Runs code review through Codex (and Gemini if you have it) before PRs |
+| `commands/codex-review.md` | Command | `/codex-review` — quick trigger for pre-PR review |
 
-## Architecture
+## How It Works
 
-### Workflow 1: Plan-Review Coding Loop
+### Coding: Plan-Review Loop
 
-Claude delegates a coding task to Codex, reviews the plan, iterates on feedback, then lets Codex execute the approved plan.
+You give Claude a task. Claude gathers context from your project, then sends Codex a detailed planning prompt in a read-only sandbox. Claude reviews the plan against your project guidelines, sends feedback, and iterates until the plan is solid. Only then does Codex get write access to execute.
 
 ```mermaid
 sequenceDiagram
@@ -47,9 +49,9 @@ sequenceDiagram
     C-->>U: Structured report
 ```
 
-### Workflow 2: Dual AI Code Review
+### Code Review: Codex + Optional Gemini
 
-Before creating a PR, both Codex and Gemini review your changes in parallel. Findings are deduplicated and ranked by severity.
+Before a PR, the reviewer agent captures your diff, builds a rich prompt with project context, and sends it to Codex for review. If you also have the Gemini CLI installed, it runs both reviewers in parallel and deduplicates findings — issues flagged by both get marked HIGH CONFIDENCE. If you don't have Gemini, it just runs Codex alone. No config changes needed either way.
 
 ```mermaid
 flowchart LR
@@ -65,27 +67,17 @@ flowchart LR
     style F fill:#f9ab00,color:#000
 ```
 
-When Gemini is unavailable, the agent automatically falls back to Codex-only mode — no configuration needed.
-
-```mermaid
-flowchart LR
-    A[Git Diff] --> B[Build Review Prompt]
-    B --> C[Codex Review]
-    C --> F[Report — Codex Only]
-
-    style C fill:#10a37f,color:#fff
-    style F fill:#f9ab00,color:#000
-```
-
 ## Prerequisites
 
-| Tool | Required | Install |
-|------|----------|---------|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Yes | `npm install -g @anthropic-ai/claude-code` |
-| [Codex CLI](https://github.com/openai/codex) | Yes | `npm install -g @openai/codex` then `codex auth` |
-| [Gemini CLI](https://github.com/google/gemini-cli) | No (optional) | `npm install -g @google/gemini-cli` |
+| Tool | Required | Why | Install |
+|------|----------|-----|---------|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Yes | Orchestration layer | `npm install -g @anthropic-ai/claude-code` |
+| [Codex CLI](https://github.com/openai/codex) | Yes | Code generation + review | `npm install -g @openai/codex` then `codex auth` |
+| [Gemini CLI](https://github.com/google/gemini-cli) | No | Second reviewer (optional) | `npm install -g @google/gemini-cli` |
 
-Both agents auto-detect installed CLIs at runtime. If Codex is missing, they stop and guide you through setup. If Gemini is missing, the reviewer falls back to Codex-only mode.
+The agents auto-detect what's installed. If Codex is missing, they stop and tell you how to set it up. If Gemini is missing, the reviewer just runs Codex alone — no errors, no degraded experience, just one reviewer instead of two.
+
+**You don't need separate API keys for this plugin.** It calls the CLIs directly, so whatever authentication you already have set up for Codex and Gemini is what it uses.
 
 ## Installation
 
@@ -108,8 +100,6 @@ git clone https://github.com/rlraymondluo/codex-coder.git
 
 ### Delegate a coding task to Codex
 
-Use the `codex-coder` agent when you have a medium-to-large implementation task:
-
 ```
 Use the codex-coder agent to implement the new authentication middleware.
 Read the existing middleware patterns first, then have Codex plan and execute.
@@ -124,19 +114,17 @@ Claude will:
 
 ### Run a pre-PR code review
 
-Use the `/codex-review` command or invoke the `ai-reviewer` agent directly:
-
 ```
 /codex-review
 ```
 
 This will:
 1. Capture the git diff of your changes
-2. Build a rich review prompt with project context
-3. Run Codex (and Gemini, if available) as reviewers
+2. Build a review prompt with project context
+3. Run Codex (and Gemini, if installed) as reviewers
 4. Produce a unified report with CRITICAL / IMPORTANT / SUGGESTION findings
 
-### Add to your CLAUDE.md for automatic reviews
+### Make it automatic
 
 Add this to your project's `CLAUDE.md` to trigger reviews before every PR:
 
@@ -148,25 +136,23 @@ Add this to your project's `CLAUDE.md` to trigger reviews before every PR:
 
 ## Configuration
 
-### Model names
+### Models
 
 The agents use these models by default:
 
-| Agent | Tool | Default Model |
-|-------|------|---------------|
-| codex-coder | Codex CLI | `gpt-5.3-codex` |
-| ai-reviewer | Codex CLI | `gpt-5.3-codex` |
-| ai-reviewer | Gemini CLI | `gemini-3-pro-preview` |
+| Agent | CLI | Default Model |
+|-------|-----|---------------|
+| codex-coder | Codex | `gpt-5.3-codex` |
+| ai-reviewer | Codex | `gpt-5.3-codex` |
+| ai-reviewer | Gemini | `gemini-3-pro-preview` |
 
 To change models, edit the `-m <model>` flags in the agent markdown files.
 
-### Codex review subcommand
+### Default branch
 
-For PR reviews, the ai-reviewer uses `codex review --base main`. If your default branch is different, update the `--base` flag in `agents/ai-reviewer.md`.
+The ai-reviewer uses `codex review --base main` for PR reviews. If your default branch is different, update the `--base` flag in `agents/ai-reviewer.md`.
 
 ## Example Output
-
-### Code Review Report (Dual Mode)
 
 ```
 ## Dual AI Code Review Results
