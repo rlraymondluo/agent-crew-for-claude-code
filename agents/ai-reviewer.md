@@ -112,70 +112,32 @@ REVIEW_EOF
 
 ### Step 3: Run Reviewer(s)
 
-#### If Gemini is available (dual review mode)
+**IMPORTANT: Run each reviewer EXACTLY ONCE. Do NOT retry with different flags or invocation patterns. If a command fails, read the error, report it in the review output, and move on.**
 
-Launch Codex and Gemini simultaneously for maximum speed.
+First, decide which mode to use. Pick ONE — do not run both:
 
-**Option A — For PR reviews (preferred when reviewing a branch against main):**
+- **Use `codex exec`** (the default) — works for all cases. Pipe the review prompt from Step 2 into Codex:
+  ```bash
+  codex exec --sandbox read-only -C <project-dir> -m gpt-5.3-codex "Review this code for bugs, security issues, guideline violations, and edge cases. Structure findings as CRITICAL, IMPORTANT, or SUGGESTION with file/line locations and suggested fixes.
 
-Check out or create a worktree of the PR branch, then use the dedicated `codex review` subcommand:
+  $(cat /tmp/ai-review-prompt.txt)" > /tmp/codex-review-output.txt 2>&1
+  ```
 
-**Codex Review:**
+- **Use `codex review`** (only for PR reviews when there's a branch to diff against main) — do NOT combine with a prompt argument:
+  ```bash
+  codex review --base main -c model="gpt-5.3-codex" > /tmp/codex-review-output.txt 2>&1
+  ```
+  Note: `-c model=` (not `-m`) for `codex review`. `--base` and `[PROMPT]` are mutually exclusive.
+
+If Gemini is available, run BOTH the Codex command above AND this Gemini command. Use the Bash tool's `run_in_background` parameter to run them in parallel — do NOT use shell `&` and `wait`:
+
 ```bash
-# If needed: git worktree add /tmp/pr-review <branch-or-sha>
-cd <worktree-or-repo-dir> && codex review --base main -c model="gpt-5.3-codex" > /tmp/codex-review-output.txt 2>&1 &
+cat /tmp/ai-review-prompt.txt | gemini -p "You are an expert code reviewer. Read the following review request carefully and provide a thorough code review. Structure your findings by severity: CRITICAL (bugs, security issues), IMPORTANT (significant improvements), SUGGESTION (nice-to-haves). For each finding, specify the file and line number if possible, explain the issue, and suggest a fix." -m gemini-3-pro-preview > /tmp/gemini-review-output.txt 2>&1
 ```
 
-**Gemini Review:**
-```bash
-cat /tmp/ai-review-prompt.txt | gemini -p "You are an expert code reviewer. Read the following review request carefully and provide a thorough code review. Structure your findings by severity: CRITICAL (bugs, security issues), IMPORTANT (significant improvements), SUGGESTION (nice-to-haves). For each finding, specify the file and line number if possible, explain the issue, and suggest a fix." -m gemini-3-pro-preview > /tmp/gemini-review-output.txt 2>&1 &
-```
+If Gemini is NOT available, skip it — just run Codex alone.
 
-Wait for both to complete:
-```bash
-wait
-```
-
-**Option B — For unstaged/uncommitted changes (when not yet on a branch):**
-
-**Codex Review:**
-```bash
-codex exec --sandbox read-only -C <project-dir> -m gpt-5.3-codex < /tmp/ai-review-prompt.txt > /tmp/codex-review-output.txt 2>&1 &
-```
-
-**Gemini Review:**
-```bash
-cat /tmp/ai-review-prompt.txt | gemini -p "You are an expert code reviewer..." -m gemini-3-pro-preview > /tmp/gemini-review-output.txt 2>&1 &
-```
-
-Wait for both:
-```bash
-wait
-```
-
-#### If Gemini is unavailable (Codex-only mode)
-
-Run only the Codex reviewer.
-
-**Option A — For PR reviews (preferred when reviewing a branch against main):**
-
-**Codex Review:**
-```bash
-# If needed: git worktree add /tmp/pr-review <branch-or-sha>
-cd <worktree-or-repo-dir> && codex review --base main -c model="gpt-5.3-codex" > /tmp/codex-review-output.txt 2>&1
-```
-
-**Option B — For unstaged/uncommitted changes (when not yet on a branch):**
-
-**Codex Review:**
-```bash
-codex exec --sandbox read-only -C <project-dir> -m gpt-5.3-codex < /tmp/ai-review-prompt.txt > /tmp/codex-review-output.txt 2>&1
-```
-
-**Important `codex review` notes:**
-- Use `-c model="gpt-5.3-codex"` (not `-m`) — `codex review` uses config overrides for model selection
-- `--base` and `[PROMPT]` are mutually exclusive — you can't pass both
-- Clean up worktrees after review: `git worktree remove /tmp/pr-review`
+After both commands finish, read the output files and proceed to Step 4.
 
 ### Step 4: Aggregate and Report
 
@@ -259,10 +221,11 @@ rm -f /tmp/ai-review-prompt.txt /tmp/codex-review-output.txt /tmp/gemini-review-
 
 ## Important Notes
 
+- **Run each reviewer EXACTLY ONCE** — do NOT retry with different flags or invocation patterns. One Codex call, one Gemini call (if available), done.
 - **Always use Codex with `-m gpt-5.3-codex`** for high reasoning capability
 - **Always use Gemini with `-m gemini-3-pro-preview`** for latest model
 - **Always use `--sandbox read-only`** for Codex review — reviewers should never modify code
-- **Run both in parallel** — use background processes (`&`) and `wait` to maximize speed
+- **Use `run_in_background` for parallelism** — do NOT use shell `&` and `wait`. Use the Bash tool's `run_in_background` parameter instead.
 - **Never skip context gathering** — reviewers produce much better feedback when given project guidelines and change context
 - **Deduplicate aggressively** — findings flagged by both reviewers are highest confidence
 - **Present actionable feedback** — every finding should have a suggested fix
