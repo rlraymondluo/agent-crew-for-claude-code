@@ -130,6 +130,10 @@ sequenceDiagram
 
 The `crew-plan` agent sends your implementation plan to both Codex and Gemini for independent review, then aggregates and deduplicates findings:
 
+<p align="center">
+  <img src="assets/demo-plan.gif" alt="Crew Plan — dual plan review in action" width="700">
+</p>
+
 ```mermaid
 flowchart LR
     A[Implementation Plan] --> B[Build Review Prompt]
@@ -147,6 +151,10 @@ flowchart LR
 ### Code Review (Crew Review)
 
 Before a PR, the reviewer agent captures your diff, builds a rich prompt with project context, and sends it to Codex for review. If you also have the Gemini CLI installed, it runs both reviewers in parallel and deduplicates findings — issues flagged by both get marked HIGH CONFIDENCE. If you don't have Gemini, it just runs Codex alone. No config changes needed either way.
+
+<p align="center">
+  <img src="assets/demo-review.gif" alt="Crew Review — dual code review in action" width="700">
+</p>
 
 ```mermaid
 flowchart LR
