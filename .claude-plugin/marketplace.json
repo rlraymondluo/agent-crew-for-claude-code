@@ -3,8 +3,8 @@
     {
       "name": "codex-coder",
       "source": "https://github.com/rlraymondluo/codex-coder",
-      "description": "Orchestrate a team of Codex agents from Claude Code — structured plan-review coding loops and dual AI code review with optional Gemini",
-      "version": "1.0.0"
+      "description": "Crew agents for Claude Code — smart coding router, dual plan review, and dual code review powered by Codex and Gemini CLIs",
+      "version": "1.1.0"
     }
   ]
 }

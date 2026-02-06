@@ -1,13 +1,12 @@
 # codex-coder
 
-> A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin that lets you use OpenAI Codex as a coding agent inside Claude Code.
-Orchestrate an army of Codex agents in Claude Code. 
+> Crew agents for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — smart coding router, dual plan review, and dual code review powered by [Codex](https://github.com/openai/codex) and [Gemini](https://github.com/google/gemini-cli) CLIs.
 
-Install this plugin and you get two new Claude Code agents and a slash command. The agents call out to the [Codex CLI](https://github.com/openai/codex) (and optionally the [Gemini CLI](https://github.com/google/gemini-cli)) to do the actual work — Claude Code orchestrates everything.
+Install this plugin and you get four Claude Code agents and three slash commands. The "Crew" agents analyze your task and route to the best AI backend — Claude Code orchestrates everything.
 
 ## Install
 
-Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex CLI](https://github.com/openai/codex). [Gemini CLI](https://github.com/google/gemini-cli) is optional.
+Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code). [Codex CLI](https://github.com/openai/codex) is recommended. [Gemini CLI](https://github.com/google/gemini-cli) is optional.
 
 ```bash
 # Via plugin marketplace
@@ -22,15 +21,15 @@ cd ~/.claude/plugins
 git clone https://github.com/rlraymondluo/codex-coder.git
 ```
 
-**No extra API keys.** The plugin calls the CLIs directly — it uses whatever auth you already have set up for Codex and Gemini.
+**No extra API keys.** The plugin calls the CLIs directly — it uses whatever auth you already have set up for Codex and Gemini. If neither CLI is installed, `crew-code` falls back to Claude natively.
 
 ## Why
 
-Claude Code has the best agentic scaffolding — subagents, agent teams, structured workflows, codebase-aware context building. Codex is great at raw code generation. But right now you have to pick one or the other.
+Claude Code has the best agentic scaffolding — subagents, agent teams, structured workflows, codebase-aware context building. Codex is great at raw code generation. Gemini brings a different perspective for reviews. But right now you have to pick one or the other.
 
-This plugin gives you both. Claude reads your codebase, builds context from your CLAUDE.md, crafts detailed prompts, reviews Codex's plans, sends feedback, and only lets Codex execute once the plan is solid. You get Claude's orchestration with Codex's code output.
+This plugin gives you all three. The Crew agents analyze your task, pick the best backend, gather project context, run structured plan-review loops, and return detailed reports. You get Claude's orchestration with the best tool for each job.
 
-**No extra API keys or subscriptions.** The plugin shells out to the Codex CLI and Gemini CLI directly. If you already have them installed and authenticated, this just works — it uses whatever auth you already have set up.
+**No extra API keys or subscriptions.** The plugin shells out to the Codex CLI and Gemini CLI directly. If you already have them installed and authenticated, this just works.
 
 ## What You Get
 
@@ -38,15 +37,48 @@ This plugin installs into your `~/.claude/` directory and adds:
 
 | What | Claude Code primitive | Description |
 |------|-----------------------|-------------|
-| `agents/codex-coder.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Delegates coding tasks to Codex with iterative plan-review loops |
-| `agents/ai-reviewer.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Runs code review through Codex (and Gemini if you have it) before PRs |
-| `commands/codex-review.md` | [Slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) | `/codex-review` — quick trigger for pre-PR review |
+| `agents/crew-code.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Smart coding router — routes to Codex, Claude, or Gemini |
+| `agents/crew-plan.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Bounces implementation plans off Codex + Gemini for independent review |
+| `agents/crew-review.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Dual code review through Codex (and Gemini if available) before PRs |
+| `agents/codex-coder.md` | [Custom agent](https://docs.anthropic.com/en/docs/claude-code/custom-agents) | Direct Codex access — plan-review loop without routing |
+| `commands/crew-code.md` | [Slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) | `/crew-code` — route a coding task to the best backend |
+| `commands/crew-plan.md` | [Slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) | `/crew-plan` — get independent plan review from Codex + Gemini |
+| `commands/crew-review.md` | [Slash command](https://docs.anthropic.com/en/docs/claude-code/slash-commands) | `/crew-review` — quick trigger for pre-PR review |
 
 ## How It Works
 
+### Smart Routing (Crew Code)
+
+The `crew-code` agent analyzes your task and routes to the best backend. It does a lightweight repo sniff, checks for user overrides, and picks the right tool:
+
+```mermaid
+flowchart TD
+    A[User Task] --> B{User Override?}
+    B -->|"use Codex/Claude/Gemini"| C[Respect Override]
+    B -->|No override| D[Analyze Task + Repo Sniff]
+    D --> E{Task Type?}
+    E -->|"Frontend/UI/Design/CSS"| F[Claude Native]
+    E -->|"Backend/API/Refactor/Tests"| G[Codex]
+    E -->|"User requested Gemini"| H[Gemini]
+    E -->|"Mixed/Unclear"| G
+    G --> I{Codex Installed?}
+    I -->|Yes| J[Codex Plan-Review Loop]
+    I -->|No| F
+    F --> K[Claude Self-Plans + Implements]
+    H --> L[Gemini Plan + Claude Applies]
+    J --> M[Structured Report]
+    K --> M
+    L --> M
+
+    style F fill:#7c3aed,color:#fff
+    style G fill:#10a37f,color:#fff
+    style H fill:#4285f4,color:#fff
+    style M fill:#f9ab00,color:#000
+```
+
 ### Coding: Plan-Review Loop
 
-You give Claude a task. Claude gathers context from your project, then sends Codex a detailed planning prompt in a read-only sandbox. Claude reviews the plan against your project guidelines, sends feedback, and iterates until the plan is solid. Only then does Codex get write access to execute.
+When routed to Codex (via `crew-code` or `codex-coder` directly), Claude gathers context from your project, then sends Codex a detailed planning prompt in a read-only sandbox. Claude reviews the plan against your project guidelines, sends feedback, and iterates until the plan is solid. Only then does Codex get write access to execute.
 
 ```mermaid
 sequenceDiagram
@@ -71,7 +103,25 @@ sequenceDiagram
     C-->>U: Structured report
 ```
 
-### Code Review: Codex + Optional Gemini
+### Plan Review (Crew Plan)
+
+The `crew-plan` agent sends your implementation plan to both Codex and Gemini for independent review, then aggregates and deduplicates findings:
+
+```mermaid
+flowchart LR
+    A[Implementation Plan] --> B[Build Review Prompt]
+    B --> C[Codex Review]
+    B --> D[Gemini Review]
+    C --> E[Aggregate & Deduplicate]
+    D --> E
+    E --> F[Severity-Ranked Report]
+
+    style C fill:#10a37f,color:#fff
+    style D fill:#4285f4,color:#fff
+    style F fill:#f9ab00,color:#000
+```
+
+### Code Review (Crew Review)
 
 Before a PR, the reviewer agent captures your diff, builds a rich prompt with project context, and sends it to Codex for review. If you also have the Gemini CLI installed, it runs both reviewers in parallel and deduplicates findings — issues flagged by both get marked HIGH CONFIDENCE. If you don't have Gemini, it just runs Codex alone. No config changes needed either way.
 
@@ -91,24 +141,50 @@ flowchart LR
 
 ## Usage
 
-### Delegate a coding task to Codex
+### Route a coding task (recommended)
+
+```
+Use the crew-code agent to implement the new authentication middleware.
+```
+
+Or use the slash command:
+
+```
+/crew-code
+```
+
+The `crew-code` agent will:
+1. Analyze the task and detect signals (backend API, frontend design, etc.)
+2. Check CLI availability and route to the best backend
+3. Gather project context from CLAUDE.md and source files
+4. Execute with the selected backend's workflow (plan-review loop for Codex, self-plan for Claude, CLI-plan for Gemini)
+5. Return a structured report with routing metadata and changes
+
+### Delegate directly to Codex
 
 ```
 Use the codex-coder agent to implement the new authentication middleware.
 Read the existing middleware patterns first, then have Codex plan and execute.
 ```
 
-Claude will:
-1. Gather project context from CLAUDE.md and source files
-2. Send Codex a detailed planning prompt (read-only sandbox)
-3. Review the plan, send feedback, iterate up to 3 times
-4. Execute the approved plan (full-auto mode)
-5. Return a structured report with changes and iteration metadata
+Use `codex-coder` when you want to bypass routing and go straight to Codex.
+
+### Review a plan
+
+```
+/crew-plan
+```
+
+This will:
+1. Send your implementation plan to Codex (and Gemini, if installed)
+2. Get independent feedback from each reviewer
+3. Aggregate findings with HIGH CONFIDENCE for overlapping issues
+4. Support iterative refinement if you revise the plan
 
 ### Run a pre-PR code review
 
 ```
-/codex-review
+/crew-review
 ```
 
 This will:
@@ -119,12 +195,15 @@ This will:
 
 ### Make it automatic
 
-Add this to your project's `CLAUDE.md` to trigger reviews before every PR:
+Add this to your project's `CLAUDE.md` to trigger Crew agents automatically:
 
 ```markdown
-## Code Review (MANDATORY)
-- **Before creating any PR**: ALWAYS run the `ai-reviewer` agent for code review
-- **For medium/large coding tasks**: Use the `codex-coder` agent with plan-review loop
+## Crew Integration (MANDATORY)
+- **Before creating any PR**: ALWAYS run the `crew-review` agent for code review
+- **For medium/large coding tasks**: ALWAYS use the `crew-code` agent (routes to best backend)
+- **When creating implementation plans**: Send to `crew-plan` for independent review
+- These rules apply to all agents, including teammates in agent teams
+- Quick review trigger: `/crew-review`
 ```
 
 ## Configuration
@@ -135,17 +214,44 @@ The agents use these models by default:
 
 | Agent | CLI | Default Model |
 |-------|-----|---------------|
+| crew-code | Codex | `gpt-5.3-codex` |
+| crew-code | Gemini | `gemini-3-pro-preview` |
+| crew-plan | Codex | `gpt-5.3-codex` |
+| crew-plan | Gemini | `gemini-3-pro-preview` |
+| crew-review | Codex | `gpt-5.3-codex` |
+| crew-review | Gemini | `gemini-3-pro-preview` |
 | codex-coder | Codex | `gpt-5.3-codex` |
-| ai-reviewer | Codex | `gpt-5.3-codex` |
-| ai-reviewer | Gemini | `gemini-3-pro-preview` |
 
 To change models, edit the `-m <model>` flags in the agent markdown files.
 
 ### Default branch
 
-The ai-reviewer uses `codex review --base main` for PR reviews. If your default branch is different, update the `--base` flag in `agents/ai-reviewer.md`.
+The `crew-review` agent uses `codex review --base main` for PR reviews. If your default branch is different, update the `--base` flag in `agents/crew-review.md`.
 
 ## Example Output
+
+### Crew Code Report
+
+```
+## Crew Code Report
+
+### Routing
+- **Backend**: Codex
+- **Signals detected**: backend API task, Express.js project, no UI components
+- **Reason**: Backend API implementation — routing to Codex
+
+### Plan-Review Summary
+- **Iterations**: 2/3 — plan approved on second revision
+- **Key feedback given**:
+  - Missing input validation on request body
+  - Should use existing error handler middleware
+
+### Changes Made
+- `src/routes/users.ts`: Added GET /users/:id endpoint with validation
+- `src/middleware/auth.ts`: Added role-based access check
+```
+
+### Crew Review Report
 
 ```
 ## Dual AI Code Review Results

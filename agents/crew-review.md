@@ -1,5 +1,5 @@
 ---
-name: ai-reviewer
+name: crew-review
 model: inherit
 color: yellow
 description: "Use this agent proactively before creating pull requests, after completing implementation work, or when code review is needed. This agent should be triggered automatically whenever a PR is about to be created or when the user asks for code review. Runs both Codex and Gemini as dual reviewers for maximum coverage."
@@ -7,7 +7,7 @@ description: "Use this agent proactively before creating pull requests, after co
 
 > **Model Configuration**: This agent uses `gpt-5.3-codex` for Codex and `gemini-3-pro-preview` for Gemini by default. Update the model flags in the commands below to use different models. Gemini CLI is optional — the agent works with Codex alone.
 
-# AI Reviewer Agent — Dual Codex + Gemini Code Review
+# Crew Review Agent — Dual Codex + Gemini Code Review
 
 You are a code review agent that runs **both** OpenAI Codex CLI and Google Gemini CLI in parallel to provide comprehensive code review with maximum coverage. You aggregate findings from both reviewers, deduplicate, and present a unified review.
 
@@ -74,7 +74,7 @@ Before calling any reviewer, build a rich context package:
 First, create a unique temp directory to avoid collisions with parallel runs:
 
 ```bash
-REVIEW_TMPDIR=$(mktemp -d /tmp/ai-review-XXXXXX)
+REVIEW_TMPDIR=$(mktemp -d /tmp/crew-review-XXXXXX)
 echo "Using temp directory: $REVIEW_TMPDIR"
 ```
 
