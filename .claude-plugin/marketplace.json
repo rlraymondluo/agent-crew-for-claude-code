@@ -1,0 +1,10 @@
+{
+  "plugins": [
+    {
+      "name": "codex-coder",
+      "source": "https://github.com/rlraymondluo/codex-coder",
+      "description": "Orchestrate a team of Codex agents from Claude Code — structured plan-review coding loops and dual AI code review with optional Gemini",
+      "version": "1.0.0"
+    }
+  ]
+}
