@@ -4,6 +4,25 @@
 
 Install this plugin and you get two new Claude Code agents and a slash command. The agents call out to the [Codex CLI](https://github.com/openai/codex) (and optionally the [Gemini CLI](https://github.com/google/gemini-cli)) to do the actual work — Claude Code orchestrates everything.
 
+## Install
+
+Requires [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Codex CLI](https://github.com/openai/codex). [Gemini CLI](https://github.com/google/gemini-cli) is optional.
+
+```bash
+# Via plugin marketplace
+claude plugin marketplace add rlraymondluo/codex-coder
+claude plugin install codex-coder
+```
+
+Or clone directly:
+
+```bash
+cd ~/.claude/plugins
+git clone https://github.com/rlraymondluo/codex-coder.git
+```
+
+**No extra API keys.** The plugin calls the CLIs directly — it uses whatever auth you already have set up for Codex and Gemini.
+
 ## Why
 
 Claude Code has the best agentic scaffolding — subagents, agent teams, structured workflows, codebase-aware context building. Codex is great at raw code generation. But right now you have to pick one or the other.
@@ -67,35 +86,6 @@ flowchart LR
     style C fill:#10a37f,color:#fff
     style D fill:#4285f4,color:#fff
     style F fill:#f9ab00,color:#000
-```
-
-## Prerequisites
-
-| Tool | Required | Why | Install |
-|------|----------|-----|---------|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Yes | Orchestration layer | `npm install -g @anthropic-ai/claude-code` |
-| [Codex CLI](https://github.com/openai/codex) | Yes | Code generation + review | `npm install -g @openai/codex` then `codex auth` |
-| [Gemini CLI](https://github.com/google/gemini-cli) | No | Second reviewer (optional) | `npm install -g @google/gemini-cli` |
-
-The agents auto-detect what's installed. If Codex is missing, they stop and tell you how to set it up. If Gemini is missing, the reviewer just runs Codex alone — no errors, no degraded experience, just one reviewer instead of two.
-
-**You don't need separate API keys for this plugin.** It calls the CLIs directly, so whatever authentication you already have set up for Codex and Gemini is what it uses.
-
-## Installation
-
-```bash
-# Add the marketplace
-claude plugin marketplace add rlraymondluo/codex-coder
-
-# Install the plugin
-claude plugin install codex-coder
-```
-
-Or clone directly:
-
-```bash
-cd ~/.claude/plugins
-git clone https://github.com/rlraymondluo/codex-coder.git
 ```
 
 ## Usage
