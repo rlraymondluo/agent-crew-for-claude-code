@@ -1,77 +1,46 @@
 #!/bin/bash
-# Simulated crew-code output for demo GIF recording
-# This prints representative output — not a live session
+# Simulated crew-code output — modeled after Claude Code interactive terminal UI
+# Uses ⏺/⎿ tool call indicators and plain text like the real CLI
+# Ends after team composition to keep the GIF focused
 
-PURPLE='\033[38;5;141m'
-GREEN='\033[38;5;78m'
-BLUE='\033[38;5;75m'
-YELLOW='\033[38;5;220m'
 BOLD='\033[1m'
 DIM='\033[2m'
 RESET='\033[0m'
-WHITE='\033[97m'
+CYAN='\033[36m'
 
 sleep 0.8
 
-# Routing banner
-echo ""
-printf "${PURPLE}${BOLD}╭──────────────────────────────────────────────────╮${RESET}\n"
-sleep 0.1
-printf "${PURPLE}${BOLD}│${RESET}  ${WHITE}${BOLD}CREW CODE${RESET} ${DIM}→${RESET} Routing to: ${GREEN}${BOLD}CODEX${RESET}                 ${PURPLE}${BOLD}│${RESET}\n"
-sleep 0.1
-printf "${PURPLE}${BOLD}│${RESET}  ${DIM}Signals: backend API, Express.js project${RESET}        ${PURPLE}${BOLD}│${RESET}\n"
-sleep 0.1
-printf "${PURPLE}${BOLD}│${RESET}  ${DIM}Reason: Backend API task → Codex${RESET}                ${PURPLE}${BOLD}│${RESET}\n"
-sleep 0.1
-printf "${PURPLE}${BOLD}╰──────────────────────────────────────────────────╯${RESET}\n"
+printf "${BOLD}[CREW] ANALYZING TASK${RESET}\n"
+printf "Incoming task: Add user profiles with avatar upload and admin dashboard\n"
+printf "Detected agent composition: 1 Codex gpt-5.3-codex, 1 Claude opus-4.6, 1 Gemini gemini-3-pro\n"
 echo ""
 sleep 0.6
 
-# Phase: gathering context
-printf "${YELLOW}${BOLD}⏳ GATHERING CONTEXT${RESET}\n"
+printf "  ${CYAN}⏺${RESET} ${BOLD}Bash${RESET} ${DIM}which codex${RESET}\n"
 sleep 0.3
-printf "   ${DIM}Reading CLAUDE.md + project structure...${RESET}\n"
-sleep 0.8
-printf "   ${DIM}Found: Express.js, TypeScript, 12 source files${RESET}\n"
+printf "    ${DIM}⎿${RESET} /usr/local/bin/codex\n"
+echo ""
+sleep 0.2
+
+printf "  ${CYAN}⏺${RESET} ${BOLD}Bash${RESET} ${DIM}which gemini${RESET}\n"
+sleep 0.3
+printf "    ${DIM}⎿${RESET} /usr/local/bin/gemini\n"
+echo ""
+sleep 0.4
+
+printf "All requested CLIs available. Building team roster.\n"
+echo ""
 sleep 0.5
-printf "   ${GREEN}✓${RESET} Context ready\n"
-echo ""
-sleep 0.4
 
-# Phase: plan mode
-printf "${YELLOW}${BOLD}⏳ PLAN MODE${RESET}\n"
-sleep 0.3
-printf "   ${DIM}Codex planning in read-only sandbox...${RESET}\n"
-sleep 1.2
-printf "   ${DIM}Reviewing plan against project guidelines...${RESET}\n"
+printf "${BOLD}[CREW] TEAM COMPOSITION${RESET}\n"
+echo ""
+printf "  ${BOLD}Agent              Type             Model           Role${RESET}\n"
+printf "  ${DIM}─────────────────  ───────────────  ──────────────  ──────────────────${RESET}\n"
+sleep 0.5
+printf "  codex-backend-1    codex-coder      gpt-5.3-codex   REST API + database\n"
 sleep 0.8
-printf "   ${GREEN}✓${RESET} Plan approved ${DIM}(iteration 1/3)${RESET}\n"
+printf "  claude-frontend-1  general-purpose  opus-4.6        Profile UI + avatar\n"
+sleep 0.8
+printf "  gemini-dashboard-1 general-purpose  gemini-3-pro    Admin dashboard\n"
 echo ""
-sleep 0.4
-
-# Phase: coding mode
-printf "${YELLOW}${BOLD}⏳ CODING MODE${RESET}\n"
-sleep 0.3
-printf "   ${DIM}Codex executing approved plan (full-auto)...${RESET}\n"
-sleep 1.5
-printf "   ${GREEN}✓${RESET} Code generated\n"
-echo ""
-sleep 0.6
-
-# Final report
-printf "${PURPLE}${BOLD}## Crew Code Report${RESET}\n"
-echo ""
-printf "${WHITE}${BOLD}### Routing${RESET}\n"
-printf "  Backend: ${GREEN}Codex${RESET}\n"
-printf "  Signals: backend API, Express.js, no UI components\n"
-printf "  Reason: Backend API implementation → Codex\n"
-echo ""
-printf "${WHITE}${BOLD}### Plan-Review Summary${RESET}\n"
-printf "  Iterations: 1/3 — plan approved on first pass\n"
-echo ""
-printf "${WHITE}${BOLD}### Changes Made${RESET}\n"
-printf "  ${GREEN}+${RESET} src/routes/users.ts    ${DIM}GET/POST /users endpoints${RESET}\n"
-printf "  ${GREEN}+${RESET} src/models/user.ts     ${DIM}User model with validation${RESET}\n"
-printf "  ${GREEN}+${RESET} src/middleware/auth.ts  ${DIM}Auth middleware for /users${RESET}\n"
-echo ""
-sleep 2
+sleep 2.0

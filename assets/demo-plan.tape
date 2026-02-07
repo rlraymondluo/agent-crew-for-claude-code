@@ -9,19 +9,14 @@ Set Framerate 20
 Set TypingSpeed 40ms
 
 Hide
-Type "source assets/demo-rc.sh && alias crew-plan='bash assets/demo-plan.sh' && clear"
+Type "export PS1='$ ' && alias claude='bash assets/demo-plan.sh' && clear"
 Enter
 Show
 
 Sleep 300ms
 
-Type@40ms "/crew-plan"
+Type@40ms "claude /crew-plan"
 Sleep 500ms
 Enter
 
-Hide
-Type "bash assets/demo-plan.sh"
-Enter
-Show
-
-Sleep 18s
+Sleep 14s

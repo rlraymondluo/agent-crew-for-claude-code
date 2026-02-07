@@ -125,6 +125,12 @@ check 14 "crew-plan.md has Codex required (exit 1) and Gemini optional" \
 grep -q "which codex" agents/crew-plan.md && grep -q "exit 1" agents/crew-plan.md && grep -q "which gemini" agents/crew-plan.md
 '
 
+# Check 15: Required demo GIF assets exist
+check 15 "assets contains demo.gif, demo-plan.gif, and demo-review.gif" \
+  bash -c '
+test -f assets/demo.gif && test -f assets/demo-plan.gif && test -f assets/demo-review.gif
+'
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed out of $((PASS+FAIL)) checks ==="
 if [ "$FAIL" -eq 0 ]; then
