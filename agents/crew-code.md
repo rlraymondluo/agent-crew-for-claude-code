@@ -17,6 +17,12 @@ You are a smart coding router agent that analyzes incoming tasks, determines the
 
 The routing decision is based on task signals, user overrides, and CLI availability. After routing, you execute the full plan-review loop using the chosen backend.
 
+**CRITICAL — Routing Enforcement:**
+- When the routing decision is **Codex**, you MUST use the `codex exec` CLI commands defined in Backend A. Do NOT skip the CLI and do the work yourself. Do NOT use `general-purpose` agents for Codex-routed tasks.
+- When the routing decision is **Gemini**, you MUST use the `gemini` CLI commands defined in Backend C. Do NOT skip the CLI.
+- In team mode, when spawning Codex agents, you MUST use `subagent_type: "codex-coder"` — NEVER `"general-purpose"`. The `codex-coder` agent file contains the Codex CLI workflow. Using `general-purpose` for a Codex-routed task defeats the entire purpose of routing.
+- The ONLY time you do the work yourself (Claude native / `general-purpose`) is when the routing decision explicitly says **Claude (native)** — either by user override, task signal analysis, or CLI unavailability fallback.
+
 ## Prerequisites Check
 
 Before starting, check which CLI tools are available. **Neither is required** — if both are missing, Claude (native) handles everything.
@@ -224,10 +230,10 @@ If a fallback was applied, the roster reflects the substitution:
 | 2 | claude-backend-2 | `general-purpose` | *(native)* | Auth middleware + tests | Codex unavailable → Claude |
 | 3 | claude-frontend-1 | `general-purpose` | *(native)* | Profile UI components | |
 
-**Agent type mapping:**
-- "Codex" → `codex-coder` (custom agent with Codex CLI workflow)
-- "Claude" → `general-purpose` (Claude native — no external CLI)
-- "Gemini" → `general-purpose` (teammate prompt includes Gemini CLI commands)
+**Agent type mapping (MANDATORY — do not deviate):**
+- "Codex" → `subagent_type: "codex-coder"` — NEVER use `"general-purpose"` for Codex. The `codex-coder` agent file contains the Codex CLI plan-review workflow. Using `general-purpose` means Codex CLI is never invoked.
+- "Claude" → `subagent_type: "general-purpose"` (Claude native — no external CLI)
+- "Gemini" → `subagent_type: "general-purpose"` (teammate prompt must include Gemini CLI commands)
 
 **Model resolution:** For each agent, use the user-specified model if provided, otherwise the default (`gpt-5.3-codex` for Codex, `gemini-3-pro-preview` for Gemini). Claude agents always use Claude Code's native model and do not accept a model override. If an agent was substituted due to a fallback, the model override is dropped.
 
@@ -289,6 +295,8 @@ Before involving any backend, build a rich context package:
 ## Backend A: Codex
 
 > **Canonical source**: The full Codex plan-review workflow is defined in `agents/codex-coder.md`. This section includes the key commands inline but defers to codex-coder.md as the source of truth to prevent drift.
+
+**CRITICAL: When routed to Codex, you MUST run the `codex exec` CLI commands below.** Do not skip the CLI and implement the task yourself — that is the Claude (native) path, not the Codex path. The whole point of routing to Codex is to use the Codex model via its CLI.
 
 ### Plan Phase
 
@@ -383,6 +391,8 @@ Implement the plan using your own tools (Read, Edit, Write, Bash). Follow the pl
 ---
 
 ## Backend C: Gemini
+
+**CRITICAL: When routed to Gemini, you MUST run the `gemini` CLI commands below.** Do not skip the CLI and implement the task yourself — that is the Claude (native) path. The whole point of routing to Gemini is to use the Gemini model via its CLI.
 
 ### Setup
 
@@ -567,3 +577,4 @@ When in team mode, use this report variant instead:
 - **Team mode uses native primitives** — use TeamCreate, TaskCreate, Task (with team_name), SendMessage, and TeamDelete. Do not reinvent coordination logic.
 - **Agent type mapping is fixed** — Codex → `codex-coder`, Claude → `general-purpose`, Gemini → `general-purpose` (with Gemini CLI in prompt).
 - **Team mode skips single-backend flow** — once a team is created, each teammate handles its own plan-review loop internally.
+- **NEVER use `general-purpose` for Codex-routed work** — this is the #1 routing violation. If the decision is Codex, you MUST use `codex-coder` (team mode) or run `codex exec` directly (single-backend mode). Using `general-purpose` means the Codex CLI is never called, which defeats the routing decision entirely.
